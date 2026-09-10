@@ -7,7 +7,7 @@ Publica noticias (IA, tecnología y buenas noticias) en un canal de Telegram, 10
 - Publica con imagen (sendPhoto) o solo texto si no hay imagen.
 El estado (lo ya publicado) se guarda en posted.json para no repetir.
 """
-import os, re, json, time, html, sys
+import os, re, json, time, html, sys, random
 import requests
 import feedparser
 from datetime import datetime, timezone
@@ -183,6 +183,19 @@ def main():
                 seen.add(eid); order.append(eid)  # lo marcamos para no re-evaluarlo
                 continue
             candidates.append((feed, e, eid, title, summary))
+
+    # VARIEDAD: intercala fuentes (round-robin) para no publicar 6 seguidas del mismo portal
+    by_feed = {}
+    for c in candidates:
+        by_feed.setdefault(c[0]["name"], []).append(c)
+    for arr in by_feed.values():
+        random.shuffle(arr)
+    mixed, groups = [], list(by_feed.values())
+    while groups:
+        for arr in groups:
+            mixed.append(arr.pop(0))
+        groups = [a for a in groups if a]
+    candidates = mixed
 
     print(f"{len(candidates)} noticias nuevas encontradas")
     posted = 0
