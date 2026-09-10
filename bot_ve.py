@@ -141,12 +141,12 @@ def is_blocked(title, summary):
     return False
 
 
-def build_text(title, summary, tag):
+def build_text(title, summary, tag, source, link):
     title = html.escape(title.strip())
     body = f"<b>{title}</b>"
     if summary:
         body += f"\n\n{html.escape(summary)}"
-    body += f"\n\n{tag}"
+    body += f"\n\n{tag} · 📰 <a href=\"{html.escape(link)}\">{html.escape(source)}</a>"
     return body
 
 
@@ -205,7 +205,7 @@ def main():
         if posted >= MAX_PER_RUN:
             break
         summary = make_summary(e)
-        text = build_text(title, summary, feed["tag"])
+        text = build_text(title, summary, feed["tag"], feed["name"], e.link)
         img = get_image(e)
         ok = send_photo(img, text) if img else False
         if not ok:
