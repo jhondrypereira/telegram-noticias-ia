@@ -141,6 +141,20 @@ def is_blocked(title, summary):
     return False
 
 
+def is_opinion(e, title):
+    """Salta columnas de opinión/editoriales (queremos solo NOTICIAS)."""
+    cats = " ".join((t.get("term", "") or "") for t in (getattr(e, "tags", []) or [])).lower()
+    if any(k in cats for k in ("opini", "columna", "editorial", "humor", "caricatur")):
+        return True
+    low = title.lower()
+    if low.startswith("opini") or "| opini" in low or "columna" in low:
+        return True
+    # patrón de firma "..., por Nombre Apellido" al FINAL del titular
+    if re.search(r',\s*por\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ.\-]+(\s+[A-ZÁÉÍÓÚÑ][\wáéíóúñ.\-]*){0,3}\s*$', title):
+        return True
+    return False
+
+
 def build_text(title, summary, tag, source, link):
     title = html.escape(title.strip())
     body = f"<b>{title}</b>"
@@ -182,7 +196,7 @@ def main():
             title = strip_html(getattr(e, "title", ""))
             if not title:
                 continue
-            if is_blocked(title, strip_html(getattr(e, "summary", ""))):
+            if is_blocked(title, strip_html(getattr(e, "summary", ""))) or is_opinion(e, title):
                 seen.add(eid); order.append(eid); continue
             cands.append((feed, e, eid, title))
 
