@@ -51,14 +51,36 @@ def strip_html(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _looks_bad(t):
+    """Detecta cuando el traductor devolvió una página de error en vez de la traducción."""
+    if not t:
+        return True
+    low = t.lower()
+    bad = ("error 500", "server error", "that's an error", "that’s an error",
+           "<html", "www.google.com", "sorry, unauthorized", "1500.")
+    return any(b in low for b in bad)
+
+
 def translate(text):
     if not text or not HAS_TR:
         return text
+    for _ in range(2):
+        try:
+            r = GoogleTranslator(source="auto", target="es").translate(text[:1200])
+            if r and not _looks_bad(r):
+                return r
+        except Exception:
+            pass
+        time.sleep(1.5)
+    # respaldo: otro traductor gratis
     try:
-        # GoogleTranslator limita a 5000 chars por llamada; nuestros textos son cortos
-        return GoogleTranslator(source="auto", target="es").translate(text[:1200])
+        from deep_translator import MyMemoryTranslator
+        r = MyMemoryTranslator(source="en-GB", target="es-ES").translate(text[:480])
+        if r and not _looks_bad(r):
+            return r
     except Exception:
-        return text
+        pass
+    return text  # último recurso: idioma original (nunca una página de error)
 
 
 def entry_id(e):
