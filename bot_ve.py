@@ -87,6 +87,15 @@ def make_summary(e):
             text = " ".join(paras).strip()
     if not text:
         return ""
+    # limpiar coletillas típicas de WordPress y datos de contacto
+    text = re.sub(r'(?is)\bLa entrada\b.*', '', text)
+    text = re.sub(r'(?is)\bThe post\b.*?appeared first on.*', '', text)
+    text = re.sub(r'(?is)\b(lea tambi[eé]n|leer m[aá]s|tambi[eé]n le puede interesar|con informaci[oó]n de)\b.*', '', text)
+    text = re.sub(r'(?i)\bcorreo:\s*', '', text)
+    text = re.sub(r'\S+@\S+\.\S+', '', text)      # emails sueltos
+    text = re.sub(r'\s+', ' ', text).strip()
+    if not text:
+        return ""
     # recorta a un resumen limpio, cerrando en punto
     if len(text) > SUMMARY_MAX:
         cut = text[:SUMMARY_MAX]
